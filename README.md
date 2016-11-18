@@ -1,6 +1,6 @@
 # git-log-to-markdown
 
-> Aggregateg git commit messages by day and convert to Markdown document.
+> Aggregate git commit messages by day and convert to Markdown document.
 
 ## Reqiurement
 
@@ -18,25 +18,25 @@ The markdown document looks like
 ```
 # 2016-11-11
 
- - My Commmit 1
+ - My Commit 1
  - My Commit 2
  - My Commit 3
 
 # 2016-11-12
 
- - My Commmit 1
+ - My Commit 1
  - My Commit 2
  - My Commit 3
 
 # 2016-11-13
 
- - My Commmit 1
+ - My Commit 1
  - My Commit 2
  - My Commit 3
 
 # 2016-11-14
 
- - My Commmit 1
+ - My Commit 1
  - My Commit 2
  - My Commit 3
 
