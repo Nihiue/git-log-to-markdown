@@ -1,16 +1,29 @@
 /*
-  node index.js --u=GIT_USER_NAME --o=OUTPUT_FILE
+  node index.js --user=GIT_USER_NAME --output=OUTPUT_FILE
 */
 
-var spawn = require('child_process').spawn;
-var fs = require('fs');
+const spawn = require('child_process').spawn;
+const fs = require('fs');
 
-function writeFile(dataArr, outputPath) {
+function rightPad(str, len, ch) {
+  const padlen = len - str.length;
+  return (padlen <= 0) ? str : str + (ch || ' ').repeat(padlen);
+}
+
+function logger(title, content) {
+  console.log(` - ${rightPad(title, 6)}: ${content}`);
+}
+
+function makeMarkdown(dataArr, outputPath) {
   let str = '';
   dataArr.forEach((item) => {
     str = str + `# ${item.date}\n\n${item.value.join('\n').replace(/^/mg, ' - ')}\n\n`;
   });
-  fs.writeFileSync(outputPath, str);
+  if (outputPath) {
+    fs.writeFileSync(outputPath, str);
+  } else {
+    console.log('\n\n', str);
+  }
 }
 
 function processData(raw) {
@@ -18,7 +31,7 @@ function processData(raw) {
   let currentArr;
   let currentDate = '';
   const lines = raw.split('\n');
-  console.log(` - Git Done: ${lines.length} Commits Found\n`)
+  logger('Git Done', `${lines.length} Commits Found\n`)
   lines.forEach((item) => {
     item = item.replace(/^"/, '').replace(/"$/, '');
     const vs = item.split('$@$');
@@ -26,7 +39,7 @@ function processData(raw) {
       return;
     }
     if ((/^merge.*branch.*into/i).test(vs[2])) {
-      console.log(` - Skip: ${vs[2]}`);
+      logger('Skip', `${vs[2].slice(0,55)}`);
       return;
     }
     vs[2] = vs[2].replace(/；|;/g, '\n');
@@ -55,32 +68,38 @@ function processData(raw) {
 
 
 (function() {
-  let user = 'WangLei';
-  let outputPath = '../commits_log.md';
-  var arguments = process.argv.splice(2);
-  arguments.forEach((arg) => {
+  const params = {
+    user: 'WangLei',
+    output: false
+  };
+  process.argv.splice(2).forEach((arg) => {
     argPair = arg.split('=');
     if (argPair.length !== 2) {
       return;
     }
-    if (argPair[0] == '--u') {
-      user = argPair[1];
-    }
-    if (argPair[0] == '--o') {
-      outputPath = argPair[1];
+    const pName = argPair[0].replace(/^--/, '');
+    if (pName && typeof params[pName] !== 'undefined') {
+      params[pName] = argPair[1];
     }
   });
-  console.log(` - User  : ${user}\n - Output: ${outputPath}\n`);
+  logger('User', `${params.user}`);
+  params.output && logger('Output', `${params.output}`);
   let rawData = '';
-  let shell = spawn('git', ['log', '--pretty=format:"%ad$@$%an$@$%s"', '--author=' + user, '--since=4.weeks', '--reverse', '--date=short']);
+  let shell = spawn('git', ['log', '--pretty=format:"%ad$@$%an$@$%s"', '--author=' + params.user, '--since=4.weeks', '--reverse', '--date=short']);
   shell.stdout.on('data', function(data) {
     rawData = rawData + data;
   });
+  shell.on('error', function() {
+    logger('Error', 'Something is wrong. Is Git installed ?');
+  });
   shell.on('exit', function(code, signal) {
     setTimeout(function() {
-      writeFile(processData(rawData), outputPath);
-      console.log(`\n - Work Done. See ${outputPath}`);
+      makeMarkdown(processData(rawData), params.output);
+      if (params.output) {
+        logger('Done', `See ${params.output}`);
+      }
       process.exit()
     }, 2000);
   });
+
 })();
