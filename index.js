@@ -17,7 +17,7 @@ function logger(title, content) {
 function makeMarkdown(dataArr, outputPath) {
   let str = '';
   dataArr.forEach((item) => {
-    str = str + `# ${item.date}\n\n${item.value.join('\n').replace(/^/mg, ' - ')}\n\n`;
+    str = str + `# ${item.date}\n\n${item.value.join('\n').replace(/^(\s)*/mg, ' - ')}\n\n`;
   });
   if (outputPath) {
     fs.writeFileSync(outputPath, str);
@@ -33,7 +33,7 @@ function processData(raw) {
   const lines = raw.split('\n');
   logger('Git Done', `${lines.length} Commits Found\n`)
   lines.forEach((item) => {
-    item = item.replace(/^"/, '').replace(/"$/, '');
+    item = item.replace(/^"|"$/g, '');
     const vs = item.split('$@$');
     if (vs.length !== 3) {
       return;
@@ -42,7 +42,7 @@ function processData(raw) {
       logger('Skip', `${vs[2].slice(0,55)}`);
       return;
     }
-    vs[2] = vs[2].replace(/；|;/g, '\n');
+    vs[2] = vs[2].replace(/(；|;)/g, '\n').replace(/^(\s)*|(\s)*$/g, '');
     if (vs[0] == currentDate) {
       currentArr.push(vs[2]);
     } else {
